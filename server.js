@@ -21,7 +21,7 @@ connectDB();
 const app = express();   
 
 app.use(cors({
-    origin: "https://guvi-task-managment-frontend.netlify.app/",
+    origin: "https://guvi-task-managment-frontend.netlify.app",
     credentials: true,
 }));
 
