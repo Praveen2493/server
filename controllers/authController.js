@@ -7,6 +7,7 @@ const User = require("../models/User");
 
 exports.registerUser = async (req, res) => {
     try {
+        console.log(req.body);
         const {name, email, password} = req.body;
 
 
@@ -72,13 +73,16 @@ exports.loginUser = async (req, res) => {
             });
         }
 
-
+       console.log(process.env.JWT_SECRET); 
+       
       const token = jwt.sign(
             {
                 id: user._id,
                 email: user.email
             },
+
             process.env.JWT_SECRET,
+
             {
                 expiresIn: "30d"
             }
