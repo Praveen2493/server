@@ -1,33 +1,33 @@
 const Notification = require("../models/Notification");
 const Task = require("../models/Task");
+const User = require("../models/User"); // Added User import for email lookup
 const sendEmail = require("../utils/sendEmail");
 
 exports.createTask = async (req, res) => {
     try {
+        // Extract file path if image is uploaded
+        const imageUrl = req.file ? `/uploads/${req.file.filename}` : req.body.imageUrl || "";
+
         const task = await Task.create({
             ...req.body,
-            createdBy:req.user.id,
+            imageUrl,
+            createdBy: req.user.id,
         });
 
-
         res.status(200).json({
-            success:true,
+            success: true,
             task,
         });
     } catch (error) {
         res.status(500).json({
-            success:false,
-            message:error.message,
-        })
+            success: false,
+            message: error.message,
+        });
     }
-}
-
-
+};
 
 exports.getTask = async (req, res) => {
-
   try {
-
     const {
       search,
       category,
@@ -63,8 +63,7 @@ exports.getTask = async (req, res) => {
       filter.priority = priority;
     }
 
-
-        // Sorting
+    // Sorting
     let sortOption = { createdAt: -1 };
 
     if (sort === "oldest") {
@@ -77,7 +76,6 @@ exports.getTask = async (req, res) => {
 
     const totalTasks = await Task.countDocuments(filter);
 
-    
     const tasks = await Task.find(filter)
       .populate("assignedTo", "name email")
       .populate("createdBy", "name email")
@@ -95,20 +93,18 @@ exports.getTask = async (req, res) => {
     });
 
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
-
 };
-
 
 exports.getTaskById = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id);
+    const task = await Task.findById(req.params.id)
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email");
 
     if (!task) {
       return res.status(404).json({
@@ -130,15 +126,18 @@ exports.getTaskById = async (req, res) => {
   }
 };
 
-
-
-
 exports.updateTask = async (req, res) => {
   try {
+    const updateData = { ...req.body };
+    
+    // Check if new file is provided during update
+    if (req.file) {
+      updateData.imageUrl = `/uploads/${req.file.filename}`;
+    }
 
     const task = await Task.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       {
         new: true,
         runValidators: true,
@@ -158,22 +157,15 @@ exports.updateTask = async (req, res) => {
     });
 
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
-
-
-
 exports.deleteTask = async (req, res) => {
   try {
-
     const task = await Task.findByIdAndDelete(
       req.params.id
     );
@@ -191,86 +183,81 @@ exports.deleteTask = async (req, res) => {
     });
 
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
-
-exports.assignTask = async (
-  req,
-  res
-) => {
+exports.assignTask = async (req, res) => {
   try {
-
     const { userId } = req.body;
 
-    const task =
-      await Task.findById(
-        req.params.id
-      );
+    const task = await Task.findById(req.params.id);
 
     if (!task) {
       return res.status(404).json({
-        success:false,
-        message:"Task Not Found"
+        success: false,
+        message: "Task Not Found"
+      });
+    }
+
+    // Fetch assigned user to get email safely
+    const assignedUser = await User.findById(userId);
+    if (!assignedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User to assign not found"
       });
     }
 
     task.assignedTo = userId;
-
     await task.save();
 
     await Notification.create({
       userId: userId,
       message: `You have been assigned task: ${task.title}`
-    })
+    });
 
-
-    await sendEmail(
-  assignedUser.email,
-  "Task Assigned",
-  `You have been assigned task: ${task.title}`
-);
+    if (assignedUser.email) {
+      await sendEmail(
+        assignedUser.email,
+        "Task Assigned",
+        `You have been assigned task: ${task.title}`
+      );
+    }
 
     res.json({
-      success:true,
-      message:"Task Assigned",
+      success: true,
+      message: "Task Assigned",
       task
     });
 
-  } catch(error) {
-
+  } catch (error) {
     res.status(500).json({
-      success:false,
-      message:error.message
+      success: false,
+      message: error.message
     });
-
   }
 };
 
+exports.getNotifications = async (req, res) => {
+  try {
+    const notifications = await Notification.find({
+      userId: req.user.id
+    }).sort({
+      createdAt: -1
+    });
 
-
-exports.getNotifications =
-async(req,res)=>{
-
-  const notifications =
-  await Notification.find({
-
-    userId:req.user.id
-
-  }).sort({
-    createdAt:-1
-  });
-
-  res.json({
-    success:true,
-    notifications
-  });
-
+    res.json({
+      success: true,
+      notifications
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };
