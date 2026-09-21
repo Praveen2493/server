@@ -44,6 +44,24 @@ app.use("/uploads", express.static(
   )
 );
 
+app.use((error, req, res, next) => {
+    if (error instanceof require("multer").MulterError) {
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+
+    if (error) {
+        return res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+
+    next();
+});
+
 
 app.get("/", (req, res) => {
     res.send("Task Management API running");

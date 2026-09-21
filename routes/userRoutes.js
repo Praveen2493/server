@@ -48,6 +48,13 @@ router.put(
 // ========================================
 // UPLOAD PROFILE IMAGE
 // ========================================
+router.get("/profile-image", (req, res) => {
+  res.status(405).json({
+    success: false,
+    message: "Use POST with an image field named profileImage to upload a profile image",
+  });
+});
+
 router.post(
   "/profile-image",
   authMiddleware,
