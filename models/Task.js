@@ -37,6 +37,11 @@ const taskSchema = new mongoose.Schema(
       type: Date,
     },
 
+    imageUrl: {
+      type: String,
+      default: "",
+    },
+
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

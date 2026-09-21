@@ -1,4 +1,4 @@
-const Task = require("../models/taskModel");
+const Task = require("../models/Task");
 
 exports.getDashboardStats = async (req, res) => {
   try {

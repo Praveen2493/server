@@ -10,13 +10,15 @@ const {createTask, getTask, getTaskById, updateTask, deleteTask, assignTask, get
 
 
 
-router.post("/", authMiddleware, createTask);
+router.post("/", authMiddleware, upload.single("file"), createTask);
 
 router.get("/", authMiddleware, getTask);
 
+router.get("/notifications", authMiddleware, getNotifications);
+
 router.get("/:id", authMiddleware, getTaskById);
 
-router.put("/:id", authMiddleware, updateTask);
+router.put("/:id", authMiddleware, upload.single("file"), updateTask);
 
 router.delete("/:id", authMiddleware, deleteTask);
 
@@ -33,13 +35,6 @@ router.post(
       file: req.file,
     });
   }
-);
-
-
-router.get(
- "/",
- authMiddleware,
- getNotifications
 );
 
 module.exports = router;

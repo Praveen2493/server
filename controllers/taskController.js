@@ -3,6 +3,13 @@ const Task = require("../models/Task");
 const User = require("../models/User"); // Added User import for email lookup
 const sendEmail = require("../utils/sendEmail");
 
+const canManageTask = (task, user) => {
+  const userId = String(user.id);
+  return user.role === "admin" ||
+    String(task.createdBy) === userId ||
+    String(task.assignedTo) === userId;
+};
+
 exports.createTask = async (req, res) => {
     try {
         // Extract file path if image is uploaded
@@ -128,6 +135,22 @@ exports.getTaskById = async (req, res) => {
 
 exports.updateTask = async (req, res) => {
   try {
+    const existingTask = await Task.findById(req.params.id);
+
+    if (!existingTask) {
+      return res.status(404).json({
+        success: false,
+        message: "Task not found",
+      });
+    }
+
+    if (!canManageTask(existingTask, req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to update this task",
+      });
+    }
+
     const updateData = { ...req.body };
     
     // Check if new file is provided during update
@@ -144,13 +167,6 @@ exports.updateTask = async (req, res) => {
       }
     );
 
-    if (!task) {
-      return res.status(404).json({
-        success: false,
-        message: "Task not found",
-      });
-    }
-
     res.status(200).json({
       success: true,
       task,
@@ -166,9 +182,7 @@ exports.updateTask = async (req, res) => {
 
 exports.deleteTask = async (req, res) => {
   try {
-    const task = await Task.findByIdAndDelete(
-      req.params.id
-    );
+    const task = await Task.findById(req.params.id);
 
     if (!task) {
       return res.status(404).json({
@@ -176,6 +190,15 @@ exports.deleteTask = async (req, res) => {
         message: "Task not found",
       });
     }
+
+    if (!canManageTask(task, req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to delete this task",
+      });
+    }
+
+    await task.deleteOne();
 
     res.status(200).json({
       success: true,
@@ -203,6 +226,13 @@ exports.assignTask = async (req, res) => {
       });
     }
 
+    if (String(task.createdBy) !== String(req.user.id) && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only the task creator can assign this task",
+      });
+    }
+
     // Fetch assigned user to get email safely
     const assignedUser = await User.findById(userId);
     if (!assignedUser) {
@@ -221,11 +251,15 @@ exports.assignTask = async (req, res) => {
     });
 
     if (assignedUser.email) {
-      await sendEmail(
-        assignedUser.email,
-        "Task Assigned",
-        `You have been assigned task: ${task.title}`
-      );
+      try {
+        await sendEmail(
+          assignedUser.email,
+          "Task Assigned",
+          `You have been assigned task: ${task.title}`
+        );
+      } catch (emailError) {
+        console.error("Task assignment email failed:", emailError.message);
+      }
     }
 
     res.json({

@@ -67,7 +67,7 @@ exports.loginUser = async (req, res) => {
         );
 
         if (!isMatch) {
-            res.status(400).json({
+            return res.status(400).json({
                 success:false,
                 message:"Invalid Credentails",
             });
@@ -78,7 +78,8 @@ exports.loginUser = async (req, res) => {
       const token = jwt.sign(
             {
                 id: user._id,
-                email: user.email
+                email: user.email,
+                role: user.role,
             },
 
             process.env.JWT_SECRET,

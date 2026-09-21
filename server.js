@@ -20,8 +20,14 @@ connectDB();
 
 const app = express();   
 
+const allowedOrigins = [
+    process.env.CLIENT_URL,
+    "http://localhost:3000",
+    "http://localhost:5173",
+].filter(Boolean);
+
 app.use(cors({
-    origin: "https://guvi-task-managment-frontend.netlify.app",
+    origin: allowedOrigins,
     credentials: true,
 }));
 

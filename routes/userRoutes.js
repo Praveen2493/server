@@ -48,7 +48,7 @@ router.put(
 // ========================================
 // UPLOAD PROFILE IMAGE
 // ========================================
-router.put(
+router.post(
   "/profile-image",
   authMiddleware,
   upload.single("profileImage"),

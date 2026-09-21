@@ -110,6 +110,10 @@ MONGO_URI=your_mongodb_connection_string
 
 JWT_SECRET=your_secret_key
 
+EMAIL_USER=your_email_address
+
+EMAIL_PASS=your_email_app_password
+
 CLIENT_URL=https://your-frontend-url.netlify.app
 ```
 
@@ -147,7 +151,7 @@ https://your-render-app.onrender.com/api
 | GET    | /api/users/profile         |
 | PUT    | /api/users/profile         |
 | PUT    | /api/users/change-password |
-| POST   | /api/users/upload-profile  |
+| POST   | /api/users/profile-image   |
 
 ### Tasks
 
@@ -157,6 +161,7 @@ https://your-render-app.onrender.com/api
 | POST   | /api/tasks     |
 | PUT    | /api/tasks/:id |
 | DELETE | /api/tasks/:id |
+| GET    | /api/tasks/notifications |
 
 ### Dashboard
 
