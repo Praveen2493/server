@@ -43,6 +43,10 @@ app.use("/uploads", express.static(
     path.join(__dirname, "uploads")
   )
 );
+app.use("/api/uploads", express.static(
+        path.join(__dirname, "uploads")
+    )
+);
 
 app.use((error, req, res, next) => {
     if (error instanceof require("multer").MulterError) {
